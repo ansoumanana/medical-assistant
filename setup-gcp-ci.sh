@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 🚨 Replace this with your actual GCP project ID
+#  Replace this with your actual GCP project ID
 PROJECT_ID="YOUR_PROJECT_ID"
 SERVICE_ACCOUNT_NAME="github-deployer"
 EMAIL="$SERVICE_ACCOUNT_NAME@$PROJECT_ID.iam.gserviceaccount.com"
