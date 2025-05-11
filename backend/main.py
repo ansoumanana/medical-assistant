@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-import subprocess
 import faiss
 import pickle
 import numpy as np
+import requests
+import os
 from sentence_transformers import SentenceTransformer
 
 app = FastAPI()
@@ -11,7 +12,27 @@ app = FastAPI()
 class Query(BaseModel):
     question: str
 
+# Load embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
+
+# Your OpenRouter API key (set this as a Cloud Run env variable or GitHub Secret)
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+def query_mistral(prompt: str) -> str:
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        json={
+            "model": "mistral",
+            "messages": [{"role": "user", "content": prompt}],
+            "temperature": 0.7
+        },
+        headers={
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        },
+        timeout=60
+    )
+    return response.json()["choices"][0]["message"]["content"]
 
 @app.post("/ask")
 async def ask_question(query: Query):
@@ -29,9 +50,5 @@ async def ask_question(query: Query):
 
 Question : {query.question}
 Réponse :"""
-
-    response = subprocess.run([
-        "ollama", "run", "mistral"
-    ], input=prompt.encode(), capture_output=True)
-    answer = response.stdout.decode()
+    answer = query_mistral(prompt)
     return {"answer": answer}
